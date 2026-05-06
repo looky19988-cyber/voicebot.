@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from gtts import gTTS
 import base64
+from io import BytesIO
 
 def STT(audio_file, apikey):
     client = openai.OpenAI(api_key=apikey)
@@ -25,6 +26,10 @@ def ask_gpt(prompt, model, apikey):
 def TTS(response):
     filename = "output.mp3"
     tts = gTTS(text=response, lang='ko')
+    buf = BytesIO()          # 메모리에 가상 파일 생성
+    tts.write_to_fp(buf)     # mp3를 파일 저장 대신 메모리에 씀
+    buf.seek(0)              # 읽기 위치를 처음으로 되돌림
+    st.audio(buf, format='audio/mp3', autoplay=True)
     tts.save(filename)
     with open(filename, "rb") as f:
         data = f.read()
