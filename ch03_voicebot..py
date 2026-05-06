@@ -58,7 +58,7 @@ def main():
         st.session_state["audio_key"] = 0
         
     # 제목        
-    st.header("음성 비서 프로그램")
+    st.header("희원이의 음성 비서 프로그램")
     # 구분선 
     st.markdown("---")
     # 설명
