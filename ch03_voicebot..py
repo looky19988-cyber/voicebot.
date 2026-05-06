@@ -24,39 +24,41 @@ def ask_gpt(prompt, model, apikey):
     return response.choices[0].message.content
 
 def TTS(response):
-    filename = "output.mp3"
     tts = gTTS(text=response, lang='ko')
-    buf = BytesIO()          # 메모리에 가상 파일 생성
-    tts.write_to_fp(buf)     # mp3를 파일 저장 대신 메모리에 씀
-    buf.seek(0)              # 읽기 위치를 처음으로 되돌림
+    buf = BytesIO()
+    tts.write_to_fp(buf)
+    buf.seek(0)
     st.audio(buf, format='audio/mp3', autoplay=True)
-    tts.save(filename)
-    with open(filename, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio autoplay>
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        st.markdown(md, unsafe_allow_html=True)
-    os.remove(filename)
 
 def main():
-    st.set_page_config(page_title="음성 비서 프로그램", layout="wide")
-
+    st.set_page_config(
+        page_title="음성 비서 프로그램", 
+        layout="wide"
+        )
+# session state 초기화 
     if "chat" not in st.session_state:
         st.session_state["chat"] = []
+        
     if "OPENAI_API" not in st.session_state:
         st.session_state["OPENAI_API"] = ""
+        
     if "message" not in st.session_state:
         st.session_state["message"] = [{"role": "system", "content": "You are a thoughtful assistant. Respond to all input in 25 words and answer in Korean"}]
+    
+    if "check_audio" not in st.session_state:
+        st.session_state["check_audio"] = False
+    
     if "check_reset" not in st.session_state:  # ✅ 추가
         st.session_state["check_reset"] = False
-
+        
+    if "audio_key" not in st.session_state:
+        st.session_state["audio_key"] = 0
+        
+    # 제목        
     st.header("음성 비서 프로그램")
+    # 구분선 
     st.markdown("---")
-
+    # 설명
     with st.expander("음성 비서 프로그램에 관하여", expanded=True):
         st.write("""
             - 음성 비서 프로그램의 UI는 스트림릿을 활용했습니다.
@@ -64,28 +66,39 @@ def main():
             - TTS(Text-To-Speech) 기능은 gTTS(Google Text-to-Speech)를 활용했습니다.
             - 답변은 OpenAI의 GPT 모델을 활용했습니다.
         """)
-
+    #사이드 바 생성 
     with st.sidebar:
+        # open AI API키 입력받기
         st.session_state["OPENAI_API"] = st.text_input(
             label="OPENAI API KEY", 
             placeholder="Enter Your API Key", 
             value="", 
             type="password"
         )
+        
         st.markdown("---")
+
+        # GPT 모델 선택하기 위한 라디오 생성 버튼 
         model = st.radio(label="GPT 모델", options=["gpt-4", "gpt-3.5-turbo"])
         st.markdown("---")
+
+        # 리셋 버튼 생성 
         if st.button(label="초기화"):
+            # 리셋 코드
             st.session_state["chat"] = []
             st.session_state["message"] = [{"role": "system", "content": "You are a thoughtful assistant. Respond to all input in 25 words and answer in Korean"}]
-            st.session_state["check_reset"] = True  # ✅ 추가
+            st.session_state["check_reset"] = True
+            st.session_state["audio_key"] += 1   # 녹음 위젯 자체를 새로 만들어버림
+            st.rerun() # 화면 즉시 새로고침
+            
+    question = None
 
+    #기능 구현 공간 
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("질문하기")
-        audio = st.audio_input("클릭하여 녹음하기")
-        if audio is not None:
-            st.session_state["check_reset"] = False  # ✅ 새 녹음 시 리셋 해제
+        audio = st.audio_input("클릭하여 녹음하기", sample_rate=16000, key=f"audio_input_{st.session_state['audio_key']}")
+
 
     with col2:
         st.subheader("질문/답변")
