@@ -102,23 +102,31 @@ def main():
     with col1:
         st.subheader("질문하기")
         audio = st.audio_input("클릭하여 녹음하기", sample_rate=16000, key=f"audio_input_{st.session_state['audio_key']}")
-
-
-    with col2:
-        st.subheader("질문/답변")
-        if audio is not None and st.session_state["check_reset"] == False and st.session_state["OPENAI_API"]:  # ✅ 수정
+        
+        if audio is not None and (st.session_state["check_reset"] == False):
+            st.audio(audio)
             question = STT(audio, st.session_state["OPENAI_API"])
 
+            
             now = datetime.now().strftime("%H:%M")
-            st.session_state["chat"].append(("user", now, question))
-            st.session_state["message"].append({"role": "user", "content": question})
-
+            st.session_state["chat"] = st.session_state["chat"] + [("user", now, question)]
+            st.session_state["message"] = st.session_state["message"] + [
+                {"role": "user", "content": question}
+            ]
+            
+    with col2:
+        st.subheader("질문/답변")
+        if question is not None and (st.session_state["check_reset"] == False):
             response = ask_gpt(st.session_state["message"], model, st.session_state["OPENAI_API"])
 
-            st.session_state["message"].append({"role": "assistant", "content": response})
+            # GPT 모델에 넣을 프롬프트를 위해 답변 내용 저장
+            st.session_state["message"] = st.session_state["message"] + [{"role": "assistant", "content": response}]
+            
+            # 채팅 시각화
             now = datetime.now().strftime("%H:%M")
-            st.session_state["chat"].append(("bot", now, response))
-
+            st.session_state["chat"] = st.session_state["chat"] + [("bot", now, response)]
+            
+            # 챝팅 형식으로 시각화 
             for sender, time, message in st.session_state["chat"]:
                 if sender == "user":
                     st.write(f'<div style="display:flex;align-items:center;"><div style="background-color:#007AFF;color:white;border-radius:12px;padding:8px 12px;margin-right:8px;">{message}</div><div style="font-size:0.8rem;color:gray;">{time}</div></div>', unsafe_allow_html=True)
