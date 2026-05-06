@@ -1,10 +1,13 @@
 import streamlit as st
 import openai
-import os
 from datetime import datetime
 from gtts import gTTS
 import base64
 from io import BytesIO
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def STT(audio_file, apikey):
     client = openai.OpenAI(api_key=apikey)
@@ -40,7 +43,7 @@ def main():
         st.session_state["chat"] = []
         
     if "OPENAI_API" not in st.session_state:
-        st.session_state["OPENAI_API"] = ""
+        st.session_state["OPENAI_API"] = os.getenv("API_KEY")  # ← API_KEY로!
         
     if "message" not in st.session_state:
         st.session_state["message"] = [{"role": "system", "content": "You are a thoughtful assistant. Respond to all input in 25 words and answer in Korean"}]
