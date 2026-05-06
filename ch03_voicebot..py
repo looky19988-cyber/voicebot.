@@ -71,14 +71,15 @@ def main():
         """)
     #사이드 바 생성 
     with st.sidebar:
-        # open AI API키 입력받기
-        st.session_state["OPENAI_API"] = st.text_input(
+        api_input = st.text_input(
             label="OPENAI API KEY", 
             placeholder="Enter Your API Key", 
-            value="", 
+            value="",
             type="password"
         )
-        
+        if api_input:
+            st.session_state["OPENAI_API"] = api_input
+            
         st.markdown("---")
 
         # GPT 모델 선택하기 위한 라디오 생성 버튼 
